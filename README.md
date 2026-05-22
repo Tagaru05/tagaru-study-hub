@@ -24,24 +24,30 @@
 
 ---
 
-## 🚀 5分でセットアップ
+## 🚀 3分でセットアップ
 
-### Step 1: Claude Code をインストール
-[claude.com](https://claude.com) から Mac / Windows 版をダウンロード。
-※ Anthropic アカウントが必要です（無料体験あり）。
+> 📌 **前提：** [Claude Code Desktop アプリ](https://claude.com) が既に入っていること。<br>
+> ターミナル（黒い画面）は**開きません**。全部 Claude Code Desktop のチャット欄に貼るだけ。
 
-### Step 2: ワンライナー実行
-ターミナル（Mac: アプリ→ユーティリティ→ターミナル）を開いて、下の1行を貼り付けて Enter：
+### Step 1: Claude Code Desktop を起動して、フォルダを開く
+適当なフォルダ（**デスクトップ**でOK）を「Open Folder」で開く。
 
-```bash
+### Step 2: チャット欄に下を貼って送信
+
+```
+次のコマンドを実行してください。タガル式・自分の教科書スキルをインストールします。
+
 curl -fsSL https://raw.githubusercontent.com/Tagaru05/tagaru-study-hub/main/install.sh | bash
+
+もしPythonやpipが無いと出たら、それも自動でインストールして続きを進めてください。
 ```
 
-### Step 3: Googleログイン
-途中でブラウザが自動で開きます。
-普段のGoogleアカウントで「許可」をクリック。
+Claude Code が「実行していい?」と確認してくるので **Yes / Allow** をクリック。
 
-### Step 4: Claude Code で話しかける
+### Step 3: Googleログイン
+途中でブラウザが自動で開きます。普段のGoogleアカウントで「許可」をクリック。
+
+### Step 4: Claude Code に話しかける
 ```
 /study-hub 学びたいテーマ
 ```
@@ -53,8 +59,12 @@ curl -fsSL https://raw.githubusercontent.com/Tagaru05/tagaru-study-hub/main/inst
 
 **これだけで、あなた専用の学習ハブが完成します。**
 
-> 💡 **初心者の方へ**：上のステップで「ターミナル?」「ワンライナー?」と詰まった方は、
-> **[👶 はじめて使う人のガイド](docs/はじめて使う人のガイド.md)** に超詳しい解説があります。20分で迷わず動けます。
+> 🆘 **うまくいかなかったら？** Claude Code のチャットに「**うまくいきません。直してください**」と書くだけ。
+> Python が無い・pip が無い・権限エラー…どんなエラーでも Claude が自動で診断・解決します。
+> 詳しくは **[🛠 統合HTMLサイトのトラブル対応セクション](https://tagaru05.github.io/tagaru-study-hub/#troubleshoot)**
+
+> 💡 **じっくり読みたい方へ**：1ステップずつ画面表示と一緒に解説した
+> **[👶 はじめて使う人のガイド](docs/はじめて使う人のガイド.md)** があります。15分で迷わず動けます。
 
 ---
 

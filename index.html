@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="学びたいテーマを話しかけるだけで、AIが「自分専用の教科書」を一晩で組み立てる。Claude Code × NotebookLM 連携スキル「タガル式・自分の教科書」。">
+<title>タガル式・自分の教科書 — Claude Code × NotebookLM 学習ハブ</title>
+<style>
+:root {
+  --bg: #fdfbf6;
+  --bg-soft: #f6f1e4;
+  --ink: #2d2a26;
+  --ink-soft: #5a534a;
+  --line: #e5dccb;
+  --accent: #c0653a;
+  --accent-soft: #f4d8c5;
+  --accent-deep: #8b3f1f;
+  --green: #5d7a4f;
+  --code-bg: #2d2a26;
+  --code-ink: #f4ead5;
+  --max: 760px;
+  --sidebar: 260px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ─────────── Hero ─────────── */
+.hero {
+  background: linear-gradient(180deg, var(--accent-soft) 0%, var(--bg) 100%);
+  padding: 80px 24px 100px;
+  text-align: center;
+}
+.hero h1 {
+  font-size: 2.4rem;
+  margin: 0 0 8px;
+  letter-spacing: 0.02em;
+  color: var(--accent-deep);
+}
+.hero .sub {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  margin-bottom: 24px;
+}
+.hero .quote {
+  font-style: italic;
+  color: var(--ink-soft);
+  margin: 24px auto;
+  max-width: 480px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+.cta {
+  display: inline-block;
+  background: var(--accent);
+  color: white !important;
+  padding: 14px 32px;
+  border-radius: 999px;
+  font-weight: 600;
+  margin-top: 16px;
+  box-shadow: 0 4px 12px rgba(192,101,58,0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.cta:hover {
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(192,101,58,0.35);
+}
+
+/* ─────────── Layout ─────────── */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar) 1fr;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 48px;
+  padding: 0 24px;
+}
+.sidebar {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  padding: 32px 0;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+.sidebar h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  margin: 0 0 12px;
+}
+.sidebar ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9rem;
+}
+.sidebar li { margin-bottom: 6px; }
+.sidebar a {
+  color: var(--ink-soft);
+  display: block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+.sidebar a:hover {
+  background: var(--bg-soft);
+  color: var(--accent);
+  text-decoration: none;
+}
+.sidebar a.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+main { padding: 32px 0 80px; }
+main section { margin-bottom: 64px; max-width: var(--max); }
+
+/* ─────────── Typography ─────────── */
+h2 {
+  font-size: 1.6rem;
+  margin: 0 0 8px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--accent);
+  display: inline-block;
+}
+h3 {
+  font-size: 1.2rem;
+  margin: 32px 0 12px;
+  color: var(--accent-deep);
+}
+h4 {
+  font-size: 1.05rem;
+  margin: 24px 0 8px;
+  color: var(--ink);
+}
+.lead {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  margin-bottom: 24px;
+}
+p { margin: 12px 0; }
+ul, ol { padding-left: 24px; }
+li { margin: 4px 0; }
+
+blockquote {
+  border-left: 4px solid var(--accent);
+  padding: 4px 16px;
+  margin: 16px 0;
+  background: var(--accent-soft);
+  color: var(--ink-soft);
+  border-radius: 0 6px 6px 0;
+  font-style: italic;
+}
+blockquote p:first-child { margin-top: 0; }
+blockquote p:last-child { margin-bottom: 0; }
+
+/* ─────────── Tables ─────────── */
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92rem;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+th, td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+th {
+  background: var(--bg-soft);
+  font-weight: 600;
+  color: var(--ink);
+}
+tr:last-child td { border-bottom: none; }
+
+/* ─────────── Code ─────────── */
+code {
+  background: var(--bg-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  color: var(--accent-deep);
+}
+pre {
+  background: var(--code-bg);
+  color: var(--code-ink);
+  padding: 16px 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  position: relative;
+}
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+}
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+pre:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { background: rgba(255,255,255,0.2); }
+.copy-btn.copied { background: var(--green); opacity: 1; }
+
+/* ─────────── Callouts ─────────── */
+.callout {
+  background: var(--bg-soft);
+  border-left: 4px solid var(--accent);
+  padding: 16px 20px;
+  border-radius: 0 6px 6px 0;
+  margin: 20px 0;
+}
+.callout-warn { border-left-color: #d4a017; background: #fdf6e0; }
+.callout-info { border-left-color: var(--green); background: #eef3ea; }
+.callout strong { color: var(--accent-deep); }
+.callout-warn strong { color: #856404; }
+.callout-info strong { color: var(--green); }
+
+/* ─────────── Step cards ─────────── */
+.steps { counter-reset: step; }
+.step {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin: 16px 0;
+  position: relative;
+  padding-left: 80px;
+  counter-increment: step;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.step::before {
+  content: counter(step);
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.step h4 { margin-top: 0; }
+
+/* ─────────── Hamburger (mobile) ─────────── */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ─────────── Footer ─────────── */
+footer {
+  background: var(--bg-soft);
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+footer p { margin: 8px 0; }
+
+/* ─────────── Responsive ─────────── */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; padding: 0 20px; }
+  .menu-toggle { display: block; }
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 280px;
+    height: 100vh;
+    max-height: 100vh;
+    background: white;
+    padding: 24px;
+    border-right: 1px solid var(--line);
+    box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+    transform: translateX(-100%);
+    transition: transform 0.25s;
+    z-index: 99;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .hero { padding: 56px 20px 72px; }
+  .hero h1 { font-size: 1.8rem; }
+  main { padding: 24px 0 60px; }
+  h2 { font-size: 1.4rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─────────── HERO ─────────── -->
+<header class="hero">
+  <h1>🎓 タガル式・自分の教科書</h1>
+  <p class="sub">学びたいテーマを話しかけるだけで、AIが「自分専用の教科書」を一晩で組み立てる</p>
+  <blockquote class="quote" style="background:none; border:none; padding:0;">
+    目的は教科書を作ることじゃない。<br>
+    学ぶ過程で、自分が言葉を持つこと。
+  </blockquote>
+  <a href="#setup" class="cta">5分でセットアップを見る →</a>
+</header>
+
+<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰ メニュー</button>
+
+<div class="layout">
+
+<!-- ─────────── SIDEBAR ─────────── -->
+<nav class="sidebar">
+  <h3>目次</h3>
+  <ol>
+    <li><a href="#what">これは何？</a></li>
+    <li><a href="#setup">3分でセットアップ</a></li>
+    <li><a href="#troubleshoot">うまくいかなかったとき</a></li>
+    <li><a href="#beginner">はじめて使う人のガイド</a></li>
+    <li><a href="#how">仕組み（5人の連携）</a></li>
+    <li><a href="#faq">よくある質問</a></li>
+    <li><a href="#share">友達に紹介するとき</a></li>
+    <li><a href="#arch">技術アーキテクチャ</a></li>
+  </ol>
+</nav>
+
+<!-- ─────────── MAIN ─────────── -->
+<main>
+
+<!-- 1. WHAT -->
+<section id="what">
+  <h2>✨ これは何？</h2>
+  <p class="lead">「○○の教科書を作って」と日本語で話しかけるだけで、AIが：</p>
+  <ol>
+    <li>テーマを <strong>観点3〜5本</strong> に分解する</li>
+    <li><strong>並列に4人のAI</strong> がリサーチする</li>
+    <li><strong>9章構成の教科書</strong> を組み立てる</li>
+    <li><strong>NotebookLMにアップロード</strong> する</li>
+    <li><strong>マインドマップ・音声・FAQ</strong> を自動生成する</li>
+  </ol>
+  <p>…までを一晩で完了させる、Claude Code 用のスキルです。</p>
+  <p>完成すると、<strong>いつでもブラウザ／スマホで勉強できる学習ハブ</strong>が手に入ります。</p>
+
+  <h3>🎯 こんな人に向いている</h3>
+  <ul>
+    <li>本気で学びたいテーマがある人</li>
+    <li>自分の言葉で語れるようになりたい人</li>
+    <li>AIに「使われる」のではなく「使う」側に立ちたい人</li>
+    <li>発信・出版・講座を目指している人</li>
+  </ul>
+  <p><strong>逆に向いていない：</strong>「効率よく知識を頭に入れたい」だけの人、メソッドを暗記したいだけの人。
+  このメソッドの目的は <em>学びの過程で自分と向き合う時間</em> を含むので。</p>
+</section>
+
+<!-- 2. SETUP -->
+<section id="setup">
+  <h2>🚀 3分でセットアップ</h2>
+  <p class="lead">前提：すでに <strong>Claude Code Desktop アプリ</strong>が入っていること。<br>
+  ターミナル（黒い画面）は<strong>一切開きません</strong>。全部 Claude Code に頼むだけです。</p>
+
+  <div class="steps">
+    <div class="step">
+      <h4>Claude Code Desktop を起動して、適当なフォルダを開く</h4>
+      <p>「Open Folder」「Open Project」で <strong>デスクトップ</strong>など好きなフォルダを選んで開きます。<br>
+      （どこを開いてもOK。スキルは後で全プロジェクト共通の場所に入ります）</p>
+    </div>
+    <div class="step">
+      <h4>チャット欄に下の文章をコピペして送信</h4>
+      <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>次のコマンドを実行してください。タガル式・自分の教科書スキルをインストールします。
+
+curl -fsSL https://raw.githubusercontent.com/Tagaru05/tagaru-study-hub/main/install.sh | bash
+
+もしPythonやpipが無いと出たら、それも自動でインストールして続きを進めてください。</code></pre>
+      <p>Claude Code が「実行していい?」と確認してくるので、<strong>Yes / Allow</strong> をクリック。</p>
+    </div>
+    <div class="step">
+      <h4>途中でブラウザが開いたら Googleログイン</h4>
+      <p>NotebookLM が使う Google アカウントで「許可」をクリック。<br>
+      ブラウザが「Authentication successful」と表示したら閉じてOK。</p>
+    </div>
+    <div class="step">
+      <h4>Claude Code に話しかける</h4>
+      <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>/study-hub 学びたいテーマ</code></pre>
+      <p>例：<code>/study-hub 感情</code>　<code>/study-hub 自己肯定感</code>　<code>/study-hub マーケティング</code></p>
+      <p><strong>これだけで、あなた専用の学習ハブが完成します。</strong></p>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>🆘 うまくいかなかったら？</strong> 慌てなくて大丈夫。Claude Code に <strong>「うまくいきません。直してください」</strong> と書くだけです。
+    Python が無い・pip が無い・権限エラー…どんなエラーでも Claude が自動で診断して、解決コマンドを実行してくれます。詳しくは下の <a href="#troubleshoot">🛠 トラブル対応</a> セクション。
+  </div>
+</section>
+
+<!-- 2.5 TROUBLESHOOT -->
+<section id="troubleshoot">
+  <h2>🛠 うまくいかなかったとき</h2>
+  <p class="lead">Claude Code Desktop の最大の強みは、<strong>エラーが出たらそのまま Claude に直してと頼める</strong>こと。普通のターミナルと違い、AI が原因を診断して修正コマンドを実行してくれます。</p>
+
+  <h3>🪄 万能の呪文</h3>
+  <p>どんなエラーでも、まずこれをチャット欄にコピペして送ってください：</p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>上のインストールがうまくいきませんでした。
+エラーを見て、原因を直してから、もう一度インストールを最後まで進めてください。
+途中で必要なソフト（PythonやHomebrew等）が足りなければ、それも入れてください。</code></pre>
+  <p>これだけで、Claude Code が：</p>
+  <ol>
+    <li>エラーログを読む</li>
+    <li>原因を特定する</li>
+    <li>解決コマンドを提案して実行する（毎回 Yes/Allow をクリックするだけ）</li>
+    <li>インストールを最後まで通す</li>
+  </ol>
+
+  <h3>📋 よくあるエラーと、Claude がやってくれること</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>エラー</th><th>原因</th><th>Claude が自動でやること</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>command not found: python3</code> / <code>Python 3 が見つかりません</code></td>
+        <td>Python が入っていない</td>
+        <td>Mac: <code>brew install python3</code><br>Windows: <code>winget install Python.Python.3</code><br>→ 完了後、インストールを再開</td>
+      </tr>
+      <tr>
+        <td><code>command not found: pip</code></td>
+        <td>pip が無い</td>
+        <td><code>python3 -m ensurepip --upgrade</code> を実行</td>
+      </tr>
+      <tr>
+        <td><code>command not found: brew</code></td>
+        <td>Homebrew が無い（Mac）</td>
+        <td>Homebrew 公式インストーラを実行</td>
+      </tr>
+      <tr>
+        <td><code>Permission denied</code> / <code>権限がありません</code></td>
+        <td>システム領域に書き込もうとした</td>
+        <td><code>pip install --user</code> または <code>sudo</code> 付きで再実行（パスワード入力を求められます）</td>
+      </tr>
+      <tr>
+        <td><code>externally-managed-environment</code></td>
+        <td>最新のMacで pip 直接実行が制限される</td>
+        <td><code>--break-system-packages</code> オプション付き or 仮想環境で実行</td>
+      </tr>
+      <tr>
+        <td>ブラウザが開かない / Google ログインで詰まる</td>
+        <td>OAuth フロー失敗</td>
+        <td><code>notebooklm login</code> を単独で再実行 → 詳細ログから原因特定</td>
+      </tr>
+      <tr>
+        <td>NotebookLM の音声生成が失敗</td>
+        <td>Google のレート制限</td>
+        <td>5〜10分待ってから再試行（Claude が時間を空けて再呼び出し）</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>📸 それでもダメなとき</h3>
+  <ol>
+    <li>Claude Code の <strong>チャット画面のスクリーンショット</strong> を撮る</li>
+    <li>「タガル（@tagaru）」に LINE / X / メールで送る</li>
+    <li>「<code>/study-hub</code> セットアップで詰まりました」と一言添える</li>
+  </ol>
+  <p>画面の状態が分かれば一発で解決します。</p>
+
+  <div class="callout callout-info">
+    <strong>💡 大事な原則：</strong> Claude Code Desktop ではあなたが手で操作する必要は<strong>ほぼゼロ</strong>です。困ったら「直して」と書く、これだけ覚えておけばOK。
+  </div>
+</section>
+
+<!-- 3. BEGINNER -->
+<section id="beginner">
+  <h2>👶 はじめて使う人のガイド</h2>
+  <p class="lead">想定読者：Claude Code Desktop は入れたけど、これまでスキルを入れたことがない人 / 想定時間：読みながらで15分 / 必要なもの：Claude Code Desktop、Googleアカウント、やる気</p>
+
+  <h3>📌 まず大事なこと</h3>
+  <p>このスキルを使うために、<strong>ターミナル（黒い画面）を別途開く必要はありません</strong>。<br>
+  全部 <strong>Claude Code のチャット欄に貼って依頼するだけ</strong>です。</p>
+  <p>失敗しても怖くないです。<strong>「直して」と書けばClaude Codeが直してくれます</strong>。
+  これがDesktopアプリの最大の強み。</p>
+
+  <h3>📋 4つの言葉の超ざっくり説明</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>言葉</th><th>たとえ</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Claude Code</strong></td><td>あなたのパソコンに住むAI。日本語で指示できる手足のあるAI</td></tr>
+      <tr><td><strong>スキル</strong></td><td>Claude Codeに教える「特技セット」。<code>/study-hub</code> もその一つ</td></tr>
+      <tr><td><strong>NotebookLM</strong></td><td>Googleの学習サービス。資料を入れるとマインドマップ・音声・FAQを自動生成してくれる</td></tr>
+      <tr><td><strong>コマンド</strong></td><td>パソコンに対する命令文。Claude Code が代わりに実行してくれるので、あなたは貼るだけ</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>✅ 始める前のチェックリスト</h3>
+  <ul>
+    <li><strong>Claude Code Desktop アプリ</strong>が起動できる（無料体験 or 月額プランで契約済み）</li>
+    <li><strong>Googleアカウント</strong>を持っている（NotebookLM用）</li>
+    <li>インターネットに繋がっている</li>
+  </ul>
+  <p>これだけ。プログラミング経験は<strong>ゼロでOK</strong>です。</p>
+
+  <h3>🚀 Step 1：Claude Code Desktop を起動して、フォルダを開く</h3>
+  <ol>
+    <li>Claude Code Desktop アプリを起動する</li>
+    <li>「Open Folder」または「Open Project」をクリック</li>
+    <li>適当なフォルダ（<strong>デスクトップ</strong>でOK）を選んで開く</li>
+  </ol>
+  <p>どこを開いても大丈夫。スキルは後で全プロジェクト共通の場所に保存されます。</p>
+
+  <h3>📋 Step 2：チャット欄にお願いを貼る</h3>
+  <p>画面下のチャット欄に、下の文章をコピペして送信してください：</p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>次のコマンドを実行してください。タガル式・自分の教科書スキルをインストールします。
+
+curl -fsSL https://raw.githubusercontent.com/Tagaru05/tagaru-study-hub/main/install.sh | bash
+
+もしPythonやpipが無いと出たら、それも自動でインストールして続きを進めてください。</code></pre>
+  <p>送信すると、Claude Code が<strong>「このコマンドを実行していい?」</strong>と確認してきます。
+  内容を見て、問題なければ <strong>Yes / Allow / 許可</strong> をクリック。</p>
+  <p>すると、こんな表示がチャットに流れます：</p>
+  <pre><code>🎓 タガル式・自分の教科書 セットアップ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▶ Step 1/5: Python の確認...
+✅ Python OK
+
+▶ Step 2/5: pip の確認...
+✅ pip OK
+
+▶ Step 3/5: notebooklm-py をインストール中...
+✅ notebooklm-py インストール完了
+
+▶ Step 4/5: NotebookLM ログイン
+   ブラウザが自動で開きます...</code></pre>
+
+  <div class="callout callout-warn">
+    <strong>🆘 途中でエラーが出たら？</strong><br>
+    そのままチャット欄に「<strong>うまくいきません。直してください</strong>」と書くだけ。Claude Code がエラーログを読んで、必要なソフトを自動でインストールして、続きを進めてくれます。詳しくは <a href="#troubleshoot">🛠 うまくいかなかったとき</a>。
+  </div>
+
+  <h3>🔑 Step 3：Googleログイン</h3>
+  <ol>
+    <li>セットアップ途中で、<strong>ブラウザが自動で開きます</strong></li>
+    <li>「Sign in with Google」をクリック</li>
+    <li>普段使っているGoogleアカウントを選ぶ</li>
+    <li>「許可（Allow）」をクリック</li>
+    <li>「Authentication successful」と出たらブラウザを閉じてOK</li>
+  </ol>
+  <p><strong>なぜGoogleログイン?</strong> NotebookLMがGoogleのサービスだから。一回限りの手続きです。</p>
+  <div class="callout callout-info">
+    <strong>個人情報、大丈夫?</strong> このログインは、あなたのパソコンとGoogleの間だけで完結します。第三者にパスワードや情報が渡ることはありません。要求されるのは「NotebookLMへのアクセス」だけで、GmailやDriveには触れません。
+  </div>
+
+  <h3>✅ Step 4：完了を確認</h3>
+  <p>チャットにこの表示が出れば、セットアップ完了です：</p>
+  <pre><code>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎉 セットアップ完了！
+
+次は Claude Code を起動して、こう話しかけてみてください：
+
+    /study-hub 学びたいテーマ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</code></pre>
+  <p>※ スキルを読み込ませるため、念のため <strong>Claude Code を一度再起動</strong> しておくと確実です。</p>
+
+  <h3>🎮 Step 5：実際に使ってみる</h3>
+  <p>チャット欄に：</p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>/study-hub 学びたいテーマ</code></pre>
+  <p>例：<code>/study-hub 感情</code>、<code>/study-hub マーケティング</code>、<code>/study-hub 自己肯定感</code>、<code>/study-hub 人類の歴史</code>、<code>/study-hub 量子力学</code></p>
+  <p><strong>何が起きるか：</strong></p>
+  <ol>
+    <li>テーマを観点に分解する（あなたに確認します）</li>
+    <li>4人のAIで並列リサーチ</li>
+    <li>9章の教科書を組み立て</li>
+    <li>NotebookLMに自動アップロード</li>
+    <li>マインドマップ・音声・FAQを生成</li>
+  </ol>
+  <p>約1〜2時間。完了したら、ブラウザでNotebookLMを開くと、<strong>あなた専用の学習ハブ</strong>が完成しています。</p>
+
+  <h3>💬 よくある不安への回答</h3>
+  <h4>「私はプログラミングできないんですが…」</h4>
+  <p>このガイドの通りに、コピペだけで進められます。<strong>料理のレシピを「分子レベルで理解する必要がない」のと同じ</strong>です。</p>
+  <h4>「途中で失敗したら全部壊れません?」</h4>
+  <p><strong>壊れません</strong>。失敗してもパソコンには何の影響もありません。何度でもやり直せます。
+  しかも Claude Code Desktop なら「直して」と書けば AI が自動で復旧します。</p>
+  <h4>「変な英語が画面に流れて怖い」</h4>
+  <p>英語のメッセージは「いま何をしているか」の実況中継。読まなくて大丈夫。
+  <code>✅</code> と <code>🎉</code> マークだけ見ていればOK。</p>
+  <h4>「インストールしたものを後で消したい」</h4>
+  <p>Claude Code のチャット欄に下を貼って依頼するだけ：</p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>タガル式・自分の教科書スキルを完全に削除してください。
+削除するのは次の3つです:
+- pip uninstall notebooklm-py
+- ~/.claude/skills/study-hub/ フォルダ
+- ~/.notebooklm/ フォルダ</code></pre>
+  <h4>「教科書を作ったら、それは公開されちゃう?」</h4>
+  <p><strong>公開されません</strong>。Markdownファイルはあなたのパソコンの中だけ、NotebookLM上はあなたのGoogleアカウント内だけ。共有したい時だけ、自分で共有設定をすればOK。</p>
+</section>
+
+<!-- 4. HOW IT WORKS -->
+<section id="how">
+  <h2>🗺️ 仕組み（5人の連携プレー）</h2>
+  <p class="lead">技術用語を全部隠せば「お願いしたら、AIがやってくれた」それだけ。でも裏側を覗いてみたい人のために。</p>
+
+  <pre><code>①あなた  →  ②Claude Code  →  ③Macの中の書類  →  ④リモコン  →  ⑤NotebookLM
+（指示）    （AI操縦士）    （Markdown）       （notebooklm-py） （Googleのサービス）</code></pre>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>登場人物</th><th>正体</th><th>役割</th></tr></thead>
+    <tbody>
+      <tr><td>①あなた</td><td>監督</td><td>テーマを決めるだけ</td></tr>
+      <tr><td>②<strong>Claude Code</strong></td><td>手足のあるAI</td><td>ファイルを作る・コマンドを撃つ</td></tr>
+      <tr><td>③ローカルファイル</td><td>Markdown書類</td><td>リサーチ素材・教科書本体</td></tr>
+      <tr><td>④<strong>notebooklm-py</strong></td><td>NotebookLMのリモコン</td><td>ターミナルからNotebookLMを操作</td></tr>
+      <tr><td>⑤Google NotebookLM</td><td>クラウドの学習サービス</td><td>あなた専用の学習ハブになる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>全体の流れ（時系列で）</h3>
+  <pre><code>[時刻 0:00] あなた「感情の教科書を作って」
+[時刻 0:01] Claude Code「観点4つに分けますね。OK?」
+[時刻 0:02] あなた「OK」
+[時刻 0:03] Claude Codeが分身4人を並列起動
+[時刻 0:10] 4分身がそれぞれリサーチ完了
+[時刻 0:30] Claude Codeが教科書9章を順次執筆
+[時刻 1:30] 教科書完成（11ファイル）
+[時刻 1:31] notebooklm-py（リモコン）を呼び出す
+[時刻 1:33] NotebookLM上にノートブック誕生
+[時刻 1:34] 17ファイルを並列アップロード
+[時刻 1:45] マインドマップ即時完成
+[時刻 2:00] 音声・FAQ・タイムライン等が順次完成
+[完了]      いつでも勉強できる学習ハブ</code></pre>
+
+  <h3>なぜこの仕組みが成り立つのか</h3>
+  <ul>
+    <li><strong>条件1：</strong>Claude Codeが「手足を持つAI」だから。普通のAIは会話で終わるが、Claude Codeはコマンドが撃てる。</li>
+    <li><strong>条件2：</strong>notebooklm-pyが「Googleのフタを開けてくれた」から。GoogleがNotebookLMの公式APIを出していなくても、有志（teng-linさん）が公開してくれた。</li>
+    <li><strong>条件3：</strong>NotebookLMが「素材を入れれば全部展開してくれる」から。マインドマップ・音声・FAQまで自動生成。</li>
+    <li><strong>条件4：</strong>すべてが「あなたのアカウント」で動くから。Google OAuthで認証するので、他人のものは触れない。</li>
+  </ul>
+
+  <h3>このメソッドが面白い理由</h3>
+  <p>「<strong>AIに使われる</strong>」から「<strong>AIを使う</strong>」への切り替わり点が、ここにあります。</p>
+  <ul>
+    <li>普通の人は、AIに質問して、AIの答えを読む = 「AIに使われる」</li>
+    <li>このメソッドでは、AIに自分の代わりに研究させ、組み立てさせ、学習ハブまで作らせる = 「AIを使う」</li>
+  </ul>
+  <p>しかも、<strong>完成した教科書を読んで学ぶプロセスで、自分の言葉が育つ</strong>。<br>
+  だから「AIを使う」状態が、同時に「自分が成長する」状態にもなる。</p>
+</section>
+
+<!-- 5. FAQ -->
+<section id="faq">
+  <h2>❓ よくある質問</h2>
+
+  <h3>💰 料金について</h3>
+  <p><strong>Q. 全部でいくらかかりますか？</strong></p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>サービス</th><th>料金</th></tr></thead>
+    <tbody>
+      <tr><td>Claude Code</td><td>月額20ドル〜（無料体験あり）</td></tr>
+      <tr><td>NotebookLM</td><td>無料プランあり（Pro月額2,900円〜）</td></tr>
+      <tr><td>notebooklm-py</td><td>完全無料（GitHub公開）</td></tr>
+      <tr><td>このスキル</td><td>完全無料（MITライセンス）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>最小構成なら、<strong>Claude Code の無料体験のみで試せます</strong>。</p>
+
+  <h3>🔧 セットアップについて</h3>
+  <p><strong>Q. プログラミング知識は必要？</strong><br>
+  ほぼ不要です。Claude Code Desktop のチャット欄にお願い文をコピペできれば動きます。あとは日本語でAIに話しかけるだけ。</p>
+  <p><strong>Q. Macじゃないとダメ？</strong><br>
+  Windows・Linuxでも動きます。Claude Code Desktop が対応しているOSなら使えます。</p>
+  <p><strong>Q. ターミナル（黒い画面）を別に開きますか？</strong><br>
+  いいえ。Claude Code Desktop が内部でやってくれるので、別アプリは何も開きません。</p>
+  <p><strong>Q. Python や pip が無いと言われました</strong><br>
+  Claude Code に「直して」と書くだけ。AIが <code>brew install python3</code> など必要なソフトを自動で入れて、続きを進めてくれます。詳細は <a href="#troubleshoot">🛠 うまくいかなかったとき</a>。</p>
+
+  <h3>🎓 使い方について</h3>
+  <p><strong>Q. どんなテーマで使える？</strong><br>
+  何でも。ただし「自分が本気で知りたいこと」が向いています。例：学問（哲学・心理学・歴史）、仕事のテーマ（マーケティング・営業）、個人のテーマ（自己肯定感・人間関係）。</p>
+  <p><strong>Q. 教科書ができるまでどれくらいかかる？</strong></p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>段階</th><th>時間</th></tr></thead>
+    <tbody>
+      <tr><td>観点分解</td><td>30秒</td></tr>
+      <tr><td>並列リサーチ</td><td>5〜10分</td></tr>
+      <tr><td>教科書執筆</td><td>30〜90分</td></tr>
+      <tr><td>NotebookLM投入</td><td>2〜5分</td></tr>
+      <tr><td>成果物生成（マインドマップ・音声等）</td><td>10〜20分</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>実時間：合計1〜2時間。</strong> ただし、ほとんどはAIが裏で動いているので、あなたは別のことをしていてOK。</p>
+  <p><strong>Q. 完成した教科書はどこに残る？</strong><br>
+  Markdownファイル: あなたのMacの中（永久保存） / NotebookLM: Google上のあなたのアカウント。どちらも消えません。</p>
+  <p><strong>Q. 自分の作った教科書を売っていい？</strong><br>
+  もちろんOK。教科書はあなたが作ったものなので、あなたのもの。ただし、このスキル本体（SKILL.md）を再配布する場合はMITライセンスに従ってください。</p>
+
+  <h3>🤔 哲学について</h3>
+  <p><strong>Q. ChatGPTで質問するのと何が違う？</strong><br>
+  ChatGPTで質問する → <strong>ChatGPTの言葉</strong>が返ってくる。<br>
+  このメソッド → <strong>自分の言葉</strong>が育つ。<br>
+  教科書を作る過程で、自分の中で言語化のプロセスを通るからです。</p>
+  <p><strong>Q.「目的は教科書を作ることじゃない」ってどういう意味？</strong><br>
+  教科書は<strong>副産物</strong>です。本当の目的は、<strong>学ぶ過程で自分が変わること</strong>。だから、AIに「全部やらせて完成品だけ受け取る」のは推奨しません。必ず章末問題を自分で書き出してください。</p>
+
+  <h3>🐛 トラブル</h3>
+  <p><strong>Q. <code>notebooklm login</code> でエラーが出る</strong><br>
+  ブラウザを一度閉じてから再試行 / <code>notebooklm auth check</code> で診断。</p>
+  <p><strong>Q. 並列リサーチが途中で止まる</strong><br>
+  サブエージェントの権限拒否の可能性。Claude Code を再起動して再試行。</p>
+  <p><strong>Q. NotebookLMの音声生成が失敗する</strong><br>
+  Googleのレート制限の可能性。5〜10分後に再試行してください。</p>
+</section>
+
+<!-- 6. SHARE -->
+<section id="share">
+  <h2>👥 友達に紹介するとき</h2>
+  <p class="lead">前提：相手も <strong>Claude Code Desktop アプリ</strong>を使っている人。コピペ2回で使ってもらえる手順をまとめました。</p>
+
+  <h3>🎯 結論：相手に送るのはこのセット</h3>
+  <p>LINEやメールに<strong>そのままコピペ</strong>して送ってください。</p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>学びたいテーマで「自分専用の教科書」を一晩で作れるClaude Codeスキルを共有します🎓
+
+▼ セットアップ手順（3分・ターミナル不要）
+詳しい手順はこちら👇
+https://tagaru05.github.io/tagaru-study-hub/
+
+最短版：Claude Code Desktop を起動 → 適当なフォルダを開く → チャット欄に下を貼って送るだけ。
+
+━━━━━━━━━━━━━━━━━━━━━━
+次のコマンドを実行してください。タガル式・自分の教科書スキルをインストールします。
+
+curl -fsSL https://raw.githubusercontent.com/Tagaru05/tagaru-study-hub/main/install.sh | bash
+
+もしPythonやpipが無いと出たら、それも自動でインストールして続きを進めてください。
+━━━━━━━━━━━━━━━━━━━━━━
+
+途中ブラウザが開いたらGoogleでログインして完了。
+完了したら /study-hub 学びたいテーマ と話しかけてみて！
+
+困ったら聞いてね！</code></pre>
+
+  <h3>📋 送る前のチェックリスト</h3>
+  <ul>
+    <li>相手が <strong>Claude Code Desktop アプリ</strong>を使えている（無料体験 or 月額）</li>
+    <li>相手が <strong>Googleアカウント</strong>を持っている</li>
+    <li>相手のパソコンが <strong>Mac か Windows</strong>（スマホだけだと使えません）</li>
+  </ul>
+
+  <h3>📨 用途別・送り方テンプレート</h3>
+
+  <h4>1️⃣ LINE / メッセージアプリ（一番手軽）</h4>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>学びたいテーマで「自分専用の教科書」が一晩で作れるClaude Codeスキル、よかったら使ってみて！
+
+▼ 詳細ガイド（コピペ用テンプレ付き）
+https://tagaru05.github.io/tagaru-study-hub/
+
+やることは2つだけ：
+1. Claude Code Desktop で適当なフォルダを開く
+2. ガイド内のお願い文をチャット欄に貼って送る
+
+エラーが出ても「直して」と書けば Claude が直してくれるから安心👌</code></pre>
+
+  <h4>2️⃣ メール / Slack / Notion（丁寧版）</h4>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>件名：自分専用の学習ハブが作れるClaude Codeスキルを共有します
+
+○○さん
+
+学びたいテーマを話しかけるだけで、AIが「自分専用の教科書」を一晩で組み立ててくれるClaude Codeスキルを共有します。
+
+【何ができる？】
+・テーマを言うだけ（例：「感情について学びたい」）
+・AIが並列でリサーチして9章構成にまとめる
+・NotebookLM上で、いつでもスマホから勉強できる学習ハブが完成
+
+【セットアップ手順（3分・ターミナル不要）】
+▶ https://tagaru05.github.io/tagaru-study-hub/
+
+前提として Claude Code Desktop アプリが入っていればOK。
+ターミナルは開きません。Claude Code のチャット欄にお願い文をコピペするだけです。
+エラーが出ても「直して」と Claude に頼めば自動で解決してくれます。
+
+【質問あれば】
+気軽に聞いてください。スクショ送ってもらえれば即解決します。</code></pre>
+
+  <h4>3️⃣ note / X / ブログで紹介（公開発信）</h4>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>学びたいテーマを話しかけるだけで、
+AIが「自分専用の教科書」を一晩で作ってくれる
+Claude Codeスキルを作りました🎓
+
+▶ Claude Code × NotebookLM 連携
+▶ ターミナル不要・チャットに貼るだけ
+▶ エラー時は「直して」で AI が自動解決
+
+無料で使えます👇
+https://tagaru05.github.io/tagaru-study-hub/
+
+#ClaudeCode #NotebookLM #AI学習</code></pre>
+
+  <h3>💡 相手のリテラシー別・声かけのコツ</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>相手</th><th>送り方</th></tr></thead>
+    <tbody>
+      <tr><td>🟢 普段から Claude Code を触っている人</td><td>サイトURLだけ送ればOK</td></tr>
+      <tr><td>🟡 Claude Code は入れたけどスキルを入れたことがない人</td><td>LINEテンプレ（1️⃣）を送る。「ターミナル開かなくて大丈夫だよ」と一言添える</td></tr>
+      <tr><td>🔴 「Claude Code 自体まだ慣れてない…」な人</td><td>「コピペするだけだから大丈夫」と伝える。<strong>最初の1回は画面共有で一緒にやってあげる</strong>のが最確実</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout callout-info">
+    <strong>💡 まだ Claude Code Desktop を入れていない相手には：</strong> まず <a href="https://claude.com" target="_blank">claude.com</a> から Claude Code Desktop をダウンロード・インストールしてもらってください。無料体験あり。インストール後、上のガイドに進めます。
+  </div>
+</section>
+
+<!-- 7. ARCHITECTURE -->
+<section id="arch">
+  <h2>🏗 技術アーキテクチャ</h2>
+  <p class="lead">配布元・インストール先・CLI・作業フォルダの4層構造です。スキルを改造したい開発者向け。</p>
+
+  <pre><code>┌────────────────────────────────────────────────────────────┐
+│  GitHub: Tagaru05/tagaru-study-hub  （配布元）             │
+│   ├─ skills/study-hub/SKILL.md   ← スキル本体              │
+│   ├─ install.sh                  ← 1コマンドセットアップ    │
+│   └─ docs/                       ← 使い方ドキュメント      │
+└────────────────────────────────────────────────────────────┘
+                          │ install.sh が curl で取得
+                          ▼
+┌────────────────────────────────────────────────────────────┐
+│  ローカル ~/.claude/skills/      （インストール先）        │
+│   ├─ study-hub/SKILL.md          ← このリポジトリのコピー  │
+│   ├─ notebooklm/SKILL.md         ← notebooklm-py 由来      │
+│   └─ nohau-library/SKILL.md      ← 別スキル                │
+└────────────────────────────────────────────────────────────┘
+                          │ スキルが内部で呼ぶ
+                          ▼
+┌────────────────────────────────────────────────────────────┐
+│  notebooklm CLI （pip install notebooklm-py）              │
+│   - NotebookLM をコマンドラインから操作                    │
+│   - ブラウザログイン状態を ~/.notebooklm に保持            │
+└────────────────────────────────────────────────────────────┘
+                          │ 成果物の置き場
+                          ▼
+┌────────────────────────────────────────────────────────────┐
+│  ~/Notebook LM操作用/  （日々の作業ワークスペース）        │
+│   ├─ 01_sources/   ← NotebookLM 投入前の素材               │
+│   ├─ 02_outputs/   ← NotebookLM から取り出した結果         │
+│   ├─ 03_drafts/    ← 記事下書き                            │
+│   └─ archive/      ← 完了案件の退避                        │
+└────────────────────────────────────────────────────────────┘</code></pre>
+
+  <h3>編集する場所の早見表</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>やりたいこと</th><th>編集する場所</th></tr></thead>
+    <tbody>
+      <tr><td><code>/study-hub</code> スキルのプロンプトを変える</td><td>このリポジトリの <code>skills/study-hub/SKILL.md</code> → commit → push</td></tr>
+      <tr><td>インストール手順を変える</td><td>このリポジトリの <code>install.sh</code> → commit → push</td></tr>
+      <tr><td>自分の環境のスキルだけ一時的に試す</td><td><code>~/.claude/skills/study-hub/SKILL.md</code> を直接編集（リポジトリには反映されない）</td></tr>
+      <tr><td><code>notebooklm</code> CLI 自体を更新</td><td><code>pip install --upgrade notebooklm-py</code></td></tr>
+      <tr><td>日々のリサーチ素材を置く</td><td><code>~/Notebook LM操作用/01_sources/</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>手動セットアップ（自動インストーラーを使わない場合）</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">コピー</button><code>pip install notebooklm-py
+notebooklm login
+notebooklm skill install
+mkdir -p ~/.claude/skills/study-hub
+curl -fsSL https://raw.githubusercontent.com/Tagaru05/tagaru-study-hub/main/skills/study-hub/SKILL.md \
+  -o ~/.claude/skills/study-hub/SKILL.md
+notebooklm language set ja</code></pre>
+</section>
+
+</main>
+</div>
+
+<!-- ─────────── FOOTER ─────────── -->
+<footer>
+  <p>🎓 <strong>タガル式・自分の教科書</strong></p>
+  <p>作者: <a href="https://x.com/tagaru" target="_blank">タガル（@tagaru）</a> ｜ MIT License</p>
+  <p><a href="https://github.com/Tagaru05/tagaru-study-hub" target="_blank">GitHub リポジトリ</a></p>
+  <blockquote style="background:none; border:none; max-width:480px; margin:24px auto; font-style:italic; font-size:0.9rem;">
+    「メソッドを売る」のではなく「道具を渡す」。<br>
+    教科書を作ることが目的じゃない。<br>
+    学ぶ過程で、自分が言葉を持つことが目的。
+  </blockquote>
+</footer>
+
+<script>
+// Copy button
+function copyCode(btn) {
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const orig = btn.innerText;
+    btn.innerText = '✓ コピー済み';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerText = orig;
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+
+// Scroll spy for sidebar
+const sections = document.querySelectorAll('main section');
+const navLinks = document.querySelectorAll('.sidebar a');
+
+function updateActive() {
+  let current = '';
+  const offset = window.scrollY + 120;
+  sections.forEach(sec => {
+    if (sec.offsetTop <= offset) current = sec.id;
+  });
+  navLinks.forEach(link => {
+    link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+  });
+}
+window.addEventListener('scroll', updateActive);
+updateActive();
+
+// Close mobile sidebar when link clicked
+navLinks.forEach(link => link.addEventListener('click', () => {
+  document.querySelector('.sidebar').classList.remove('open');
+}));
+</script>
+
+</body>
+</html>
